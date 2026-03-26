@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHEN TO MEET - 協調開會時間</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* 新增人員區域 */
+        .add-person-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button.delete-btn {
+            background: #e74c3c;
+        }
+
+        button.delete-btn:hover {
+            background: #c0392b;
+        }
+
+        /* 時間表區域 */
+        .schedule-section {
+            margin-top: 30px;
+        }
+
+        .schedule-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        td {
+            background: #fafafa;
+        }
+
+        /* 時間格子 */
+        .time-cell {
+            padding: 5px;
+        }
+
+        .checkbox-cell {
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* 結果區域 */
+        .result-section {
+            margin-top: 30px;
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .available-times {
+            color: #2ecc71;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .no-available-times {
+            color: #e74c3c;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .person-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .person-tag {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .person-tag .close {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .person-tag .close:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 WHEN TO MEET</h1>
+        <div class="subtitle">輕鬆協調大家的開會時間</div>
+
+        <!-- 新增人員 -->
+        <div class="add-person-section">
+            <div class="input-group">
+                <input type="text" id="nameInput" placeholder="輸入名字..." />
+                <button onclick="addPerson()">➕ 新增成員</button>
+            </div>
+            <div class="person-list" id="personList"></div>
+        </div>
+
+        <!-- 時間表 -->
+        <div class="schedule-section">
+            <div class="schedule-title">選擇有空的時間</div>
+            <div class="table-wrapper">
+                <table id="scheduleTable"></table>
+            </div>
+        </div>
+
+        <!-- 結果 -->
+        <div class="result-section">
+            <div class="result-title">✅ 最佳開會時間</div>
+            <div id="result" style="margin-top: 10px;">
+                <p style="color: #999;">請先新增成員並勾選時間</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 資料設定 =====
+        const DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+        const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+        let people = [];  // 人員清單
+        let availability = {};  // 保存每個人的空閒時間
+
+        // ===== 新增成員 =====
+        function addPerson() {
+            const input = document.getElementById('nameInput');
+            const name = input.value.trim();
+
+            if (!name) {
+                alert('請輸入名字！');
+                return;
+            }
+
+            if (people.includes(name)) {
+                alert('此成員已存在！');
+                return;
+            }
+
+            people.push(name);
+            availability[name] = {};
+
+            // 初始化此人的時間表
+            DAYS.forEach(day => {
+                availability[name][day] = {};
+                HOURS.forEach(hour => {
+                    availability[name][day][hour] = false;
+                });
+            });
+
+            input.value = '';
+            updateUI();
+        }
+
+        // ===== 刪除成員 =====
+        function removePerson(name) {
+            people = people.filter(p => p !== name);
+            delete availability[name];
+            updateUI();
+        }
+
+        // ===== 更新時間 =====
+        function updateTime(person, day, hour) {
+            availability[person][day][hour] = !availability[person][day][hour];
+            calculateBestTime();
+        }
+
+        // ===== 更新整個 UI =====
+        function updateUI() {
+            updatePersonList();
+            updateScheduleTable();
+            calculateBestTime();
+        }
+
+        // ===== 顯示成員清單 =====
+        function updatePersonList() {
+            const personList = document.getElementById('personList');
+            personList.innerHTML = people.map(name => `
+                <div class="person-tag">
+                    👤 ${name}
+                    <span class="close" onclick="removePerson('${name}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        // ===== 生成時間表 =====
+        function updateScheduleTable() {
+            const table = document.getElementById('scheduleTable');
+            table.innerHTML = '';
+
+            if (people.length === 0) {
+                table.innerHTML = '<tr><td colspan="11" style="color: #999;">請先新增成員</td></tr>';
+                return;
+            }
+
+            // 表頭
+            let headerHTML = '<tr><th>成員 / 時間</th>';
+            DAYS.forEach(day => {
+                headerHTML += `<th>${day}</th>`;
+            });
+            headerHTML += '</tr>';
+            table.innerHTML = headerHTML;
+
+            // 每個人的時間表
+            people.forEach(person => {
+                let rowHTML = `<tr><th style="background: #764ba2;">${person}</th>`;
+
+                DAYS.forEach(day => {
+                    rowHTML += '<td style="padding: 0;">';
+                    rowHTML += '<div style="display: flex; flex-direction: column; gap: 4px; padding: 4px;">';
+
+                    HOURS.forEach(hour => {
+                        const isChecked = availability[person][day][hour];
+                        rowHTML += `
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 3px; border-radius: 3px; background: ${isChecked ? '#c8e6c9' : '#fff'};">
+                                <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                                    onchange="updateTime('${person}', '${day}', '${hour}')" 
+                                    style="width: 16px; height: 16px; cursor: pointer;">
+                                <span style="font-size: 11px;">${hour}</span>
+                            </label>
+                        `;
+                    });
+
+                    rowHTML += '</div></td>';
+                });
+
+                rowHTML += '</tr>';
+                table.innerHTML += rowHTML;
+            });
+        }
+
+        // ===== 計算最佳開會時間 =====
+        function calculateBestTime() {
+            const resultDiv = document.getElementById('result');
+
+            if (people.length === 0) {
+                resultDiv.innerHTML = '<p style="color: #999;">請先新增成員並勾選時間</p>';
+                return;
+            }
+
+            let bestTimes = [];
+
+            // 检查每個時間段是否所有人都有空
+            DAYS.forEach(day => {
+                HOURS.forEach(hour => {
+                    const allAvailable = people.every(person => availability[person][day][hour]);
+
+                    if (allAvailable) {
+                        bestTimes.push(`${day} ${hour}`);
+                    }
+                });
+            });
+
+            if (bestTimes.length === 0) {
+                resultDiv.innerHTML = '<div class="no-available-times">❌ 目前還沒有大家都有空的時間</div>';
+            } else {
+                let html = '<div class="available-times">✅ 大家都有空的時間：</div>';
+                html += '<div style="margin-top: 10px;">';
+                bestTimes.forEach(time => {
+                    html += `<div style="padding: 8px; background: #c8e6c9; border-radius: 5px; margin: 5px 0; color: #2d5016;">🕒 ${time}</div>`;
+                });
+                html += '</div>';
+                resultDiv.innerHTML = html;
+            }
+        }
+
+        // ===== 初始化 =====
+        updateUI();
+    </script>
+</body>
+</html>

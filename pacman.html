@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Man 遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        #gameContainer {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        #info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        #score, #level {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        canvas {
+            background: #000;
+            display: block;
+            margin: 0 auto 15px;
+            border-radius: 5px;
+            border: 3px solid #667eea;
+        }
+
+        #controls {
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .game-over {
+            font-size: 24px;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .game-win {
+            font-size: 24px;
+            color: #2ecc71;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🎮 Pac-Man 遊戲</h1>
+        <div id="info">
+            <div>分數: <span id="score">0</span></div>
+            <div>等級: <span id="level">1</span></div>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="controls">
+            <p>🎯 使用方向鍵移動 Pac-Man</p>
+            <p>🟡 吃掉所有黃點取得分數</p>
+            <p>👻 避開幽靈！</p>
+        </div>
+        <button onclick="location.reload()">重新開始</button>
+        <div id="gameStatus"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const GRID_SIZE = 20;
+        const COLS = canvas.width / GRID_SIZE;
+        const ROWS = canvas.height / GRID_SIZE;
+
+        // Pac-Man
+        let pacman = {
+            x: 1,
+            y: 1,
+            direction: { x: 0, y: 0 },
+            nextDirection: { x: 0, y: 0 },
+            radius: 8
+        };
+
+        // 幽靈
+        let ghosts = [
+            { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2), color: '#ff0000', direction: { x: 1, y: 0 } },
+            { x: Math.floor(COLS / 2) - 1, y: Math.floor(ROWS / 2), color: '#ffb6c1', direction: { x: -1, y: 0 } },
+            { x: Math.floor(COLS / 2) + 1, y: Math.floor(ROWS / 2), color: '#00ffff', direction: { x: 0, y: 1 } }
+        ];
+
+        // 豆子
+        let dots = [];
+        let pellets = [];
+        let walls = [];
+        let score = 0;
+        let level = 1;
+        let gameOver = false;
+        let gameWin = false;
+
+        // 初始化地圖
+        function initializeMap() {
+            dots = [];
+            pellets = [];
+            walls = [];
+
+            // 建立迷宮牆壁
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    // 邊界
+                    if (x === 0 || x === COLS - 1 || y === 0 || y === ROWS - 1) {
+                        walls.push({ x, y });
+                    }
+                    // 中間的牆
+                    else if ((x === 5 || x === 10 || x === 15) && (y > 3 && y < 12)) {
+                        walls.push({ x, y });
+                    } else if ((y === 5 || y === 10) && (x > 2 && x < 18)) {
+                        walls.push({ x, y });
+                    }
+                }
+            }
+
+            // 放置豆子
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (!walls.some(w => w.x === x && w.y === y) &&
+                        !(x === pacman.x && y === pacman.y)) {
+                        dots.push({ x, y });
+                    }
+                }
+            }
+        }
+
+        // 繪製函數
+        function drawWalls() {
+            ctx.fillStyle = '#4B6EFF';
+            walls.forEach(wall => {
+                ctx.fillRect(wall.x * GRID_SIZE + 1, wall.y * GRID_SIZE + 1,
+                    GRID_SIZE - 2, GRID_SIZE - 2);
+            });
+        }
+
+        function drawDots() {
+            ctx.fillStyle = '#FFFF80';
+            dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x * GRID_SIZE + GRID_SIZE / 2, dot.y * GRID_SIZE + GRID_SIZE / 2,
+                    3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawPacman() {
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(pacman.x * GRID_SIZE + GRID_SIZE / 2, pacman.y * GRID_SIZE + GRID_SIZE / 2,
+                pacman.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawGhosts() {
+            ghosts.forEach((ghost, index) => {
+                ctx.fillStyle = ghost.color;
+                ctx.fillRect(ghost.x * GRID_SIZE + 2, ghost.y * GRID_SIZE + 2,
+                    GRID_SIZE - 4, GRID_SIZE - 4);
+
+                // 眼睛
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(ghost.x * GRID_SIZE + 6, ghost.y * GRID_SIZE + 6, 3, 3);
+                ctx.fillRect(ghost.x * GRID_SIZE + 11, ghost.y * GRID_SIZE + 6, 3, 3);
+            });
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawWalls();
+            drawDots();
+            drawPacman();
+            drawGhosts();
+        }
+
+        // 移動 Pac-Man
+        function movePacman() {
+            let nextX = pacman.x + pacman.nextDirection.x;
+            let nextY = pacman.y + pacman.nextDirection.y;
+
+            if (!isWall(nextX, nextY)) {
+                pacman.x = nextX;
+                pacman.y = nextY;
+                pacman.direction = pacman.nextDirection;
+            } else {
+                nextX = pacman.x + pacman.direction.x;
+                nextY = pacman.y + pacman.direction.y;
+                if (!isWall(nextX, nextY)) {
+                    pacman.x = nextX;
+                    pacman.y = nextY;
+                }
+            }
+
+            // 檢查吃豆子
+            dots = dots.filter(dot => {
+                if (dot.x === pacman.x && dot.y === pacman.y) {
+                    score += 10;
+                    document.getElementById('score').textContent = score;
+                    return false;
+                }
+                return true;
+            });
+
+            // 勝利條件
+            if (dots.length === 0) {
+                gameWin = true;
+                level++;
+                document.getElementById('level').textContent = level;
+                document.getElementById('gameStatus').innerHTML = 
+                    '<div class="game-win">🎉 恭喜！進入下一關</div>';
+            }
+        }
+
+        // 移動幽靈 AI
+        function moveGhosts() {
+            ghosts.forEach((ghost, index) => {
+                // 簡單的 AI - 隨機移動，避免撞牆
+                let moved = false;
+                const directions = [
+                    { x: 1, y: 0 },
+                    { x: -1, y: 0 },
+                    { x: 0, y: 1 },
+                    { x: 0, y: -1 }
+                ];
+
+                // 30% 機率改變方向
+                if (Math.random() < 0.3 || isWall(ghost.x + ghost.direction.x, ghost.y + ghost.direction.y)) {
+                    ghost.direction = directions[Math.floor(Math.random() * directions.length)];
+                }
+
+                let nextX = ghost.x + ghost.direction.x;
+                let nextY = ghost.y + ghost.direction.y;
+
+                if (!isWall(nextX, nextY)) {
+                    ghost.x = nextX;
+                    ghost.y = nextY;
+                }
+            });
+        }
+
+        function isWall(x, y) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return true;
+            return walls.some(w => w.x === x && w.y === y);
+        }
+
+        // 檢查碰撞
+        function checkCollision() {
+            for (let ghost of ghosts) {
+                if (pacman.x === ghost.x && pacman.y === ghost.y) {
+                    gameOver = true;
+                    document.getElementById('gameStatus').innerHTML = 
+                        '<div class="game-over">💀 遊戲結束！被幽靈抓住了</div>';
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 鍵盤控制
+        document.addEventListener('keydown', (e) => {
+            if (gameOver || gameWin) return;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    pacman.nextDirection = { x: 0, y: -1 };
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    pacman.nextDirection = { x: 0, y: 1 };
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    pacman.nextDirection = { x: -1, y: 0 };
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    pacman.nextDirection = { x: 1, y: 0 };
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // 遊戲迴圈
+        function gameLoop() {
+            if (!gameOver && !gameWin) {
+                movePacman();
+                moveGhosts();
+                if (checkCollision()) {
+                    draw();
+                    return;
+                }
+            }
+            draw();
+            setTimeout(gameLoop, 150);
+        }
+
+        // 初始化並開始遊戲
+        initializeMap();
+        gameLoop();
+    </script>
+</body>
+</html>
