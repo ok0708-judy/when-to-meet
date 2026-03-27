@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Man 遊戲 - 難度選擇版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+        }
+
+        #gameContainer {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        #difficultyPanel {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .difficulty-btn {
+            background: #667eea;
+            color: white;
+            border: 2px solid transparent;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .difficulty-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn.active {
+            border-color: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .settings {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: left;
+            display: none;
+        }
+
+        .settings.show {
+            display: block;
+        }
+
+        .setting-item {
+            margin: 12px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .setting-item label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .setting-item input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .setting-value {
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #info {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+            display: none;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        #gameBoard {
+            display: inline-grid;
+            gap: 2px;
+            background: #000;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 3px solid #667eea;
+        }
+
+        .cell {
+            width: 35px;
+            height: 35px;
+            background: #222;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .controls {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .button-group {
+            display: none;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        #message {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 15px;
+            min-height: 30px;
+        }
+
+        .lose {
+            color: #e74c3c;
+        }
+
+        .win {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🎮 Pac-Man 遊戲</h1>
+        
+        <div id="difficultyPanel">
+            <h3 style="margin-bottom: 15px; color: #333;">選擇難度等級</h3>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn" onclick="setDifficulty('easy')">🟢 簡單</button>
+                <button class="difficulty-btn" onclick="setDifficulty('normal')">🟡 普通</button>
+                <button class="difficulty-btn" onclick="setDifficulty('hard')">🔴 困難</button>
+                <button class="difficulty-btn" onclick="setDifficulty('custom')">⚙️ 自訂</button>
+            </div>
+            
+            <div id="customSettings" class="settings">
+                <h4 style="margin-top: 0;">遊戲參數設定</h4>
+                
+                <div class="setting-item">
+                    <label>棋盤寬度:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="range" id="boardWidth" min="5" max="15" value="10" onchange="updateSettingValue('boardWidth')">
+                        <span class="setting-value" id="boardWidthValue">10</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>棋盤高度:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="range" id="boardHeight" min="3" max="8" value="5" onchange="updateSettingValue('boardHeight')">
+                        <span class="setting-value" id="boardHeightValue">5</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>幽靈速度 (ms):</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="range" id="ghostSpeed" min="300" max="2000" value="1000" step="100" onchange="updateSettingValue('ghostSpeed')">
+                        <span class="setting-value" id="ghostSpeedValue">1000</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>幽靈數量:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="range" id="ghostCount" min="1" max="5" value="1" onchange="updateSettingValue('ghostCount')">
+                        <span class="setting-value" id="ghostCountValue">1</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="startGameWithCustom()" style="margin-right: 10px;">開始遊戲</button>
+                    <button class="secondary" onclick="resetCustomSettings()">重置</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="info">
+            <div>分數: <span id="score">0</span></div>
+            <div>難度: <span id="difficulty">普通</span></div>
+        </div>
+        <div id="gameBoard"></div>
+        <div class="controls" id="controlsPanel">
+            👆 用方向鍵移動黃色點點<br>
+            🔵 吃掉所有藍點<br>
+            👻 避開紅色幽靈
+        </div>
+        <div class="button-group" id="buttonGroup">
+            <button onclick="pauseGame()">⏸️ 暫停</button>
+            <button onclick="location.reload()">🔄 重新開始</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const DIFFICULTY_PRESETS = {
+            easy: { cols: 10, rows: 5, ghostSpeed: 1500, ghostCount: 1, displayName: '簡單' },
+            normal: { cols: 10, rows: 5, ghostSpeed: 1000, ghostCount: 2, displayName: '普通' },
+            hard: { cols: 12, rows: 6, ghostSpeed: 600, ghostCount: 3, displayName: '困難' }
+        };
+
+        let ROWS = 5, COLS = 10, GHOST_SPEED = 1000, GHOST_COUNT = 1;
+        let TOTAL_CELLS = ROWS * COLS;
+        let currentDifficulty = 'normal';
+        let pacmanPos = 0;
+        let ghostPositions = [];
+        let blueDots = [];
+        let score = 0;
+        let gameOver = false;
+        let gameWin = false;
+        let gamePaused = false;
+        let ghostInterval = null;
+
+        function setDifficulty(difficulty) {
+            if (difficulty === 'custom') {
+                document.getElementById('customSettings').classList.add('show');
+            } else {
+                document.getElementById('customSettings').classList.remove('show');
+                const preset = DIFFICULTY_PRESETS[difficulty];
+                ROWS = preset.rows;
+                COLS = preset.cols;
+                GHOST_SPEED = preset.ghostSpeed;
+                GHOST_COUNT = preset.ghostCount;
+                TOTAL_CELLS = ROWS * COLS;
+                currentDifficulty = difficulty;
+                
+                document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                startGame();
+            }
+        }
+
+        function updateSettingValue(settingId) {
+            const elem = document.getElementById(settingId);
+            const valueElem = document.getElementById(settingId + 'Value');
+            valueElem.textContent = elem.value;
+        }
+
+        function startGameWithCustom() {
+            COLS = parseInt(document.getElementById('boardWidth').value);
+            ROWS = parseInt(document.getElementById('boardHeight').value);
+            GHOST_SPEED = parseInt(document.getElementById('ghostSpeed').value);
+            GHOST_COUNT = parseInt(document.getElementById('ghostCount').value);
+            TOTAL_CELLS = ROWS * COLS;
+            currentDifficulty = 'custom';
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            startGame();
+        }
+
+        function resetCustomSettings() {
+            document.getElementById('boardWidth').value = '10';
+            document.getElementById('boardHeight').value = '5';
+            document.getElementById('ghostSpeed').value = '1000';
+            document.getElementById('ghostCount').value = '1';
+            updateSettingValue('boardWidth');
+            updateSettingValue('boardHeight');
+            updateSettingValue('ghostSpeed');
+            updateSettingValue('ghostCount');
+        }
+
+        function startGame() {
+            pacmanPos = 0;
+            score = 0;
+            gameOver = false;
+            gameWin = false;
+            gamePaused = false;
+            blueDots = [];
+            ghostPositions = [];
+            
+            document.getElementById('difficultyPanel').style.display = 'none';
+            document.getElementById('info').style.display = 'flex';
+            document.getElementById('controlsPanel').style.display = 'block';
+            document.getElementById('buttonGroup').style.display = 'flex';
+            document.getElementById('difficulty').textContent = 
+                currentDifficulty === 'custom' ? '自訂' : DIFFICULTY_PRESETS[currentDifficulty].displayName;
+            document.getElementById('score').textContent = score;
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = '';
+            document.getElementById('gameBoard').style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            
+            for (let i = 0; i < GHOST_COUNT; i++) {
+                ghostPositions.push(TOTAL_CELLS - 1 - i);
+            }
+            
+            initGame();
+            
+            if (ghostInterval) clearInterval(ghostInterval);
+            ghostInterval = setInterval(() => {
+                if (!gameOver && !gameWin && !gamePaused) {
+                    moveGhosts();
+                    checkCollision();
+                    drawBoard();
+                }
+            }, GHOST_SPEED);
+        }
+
+        function initGame() {
+            blueDots = [];
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (i !== pacmanPos && !ghostPositions.includes(i)) {
+                    blueDots.push(i);
+                }
+            }
+            drawBoard();
+        }
+
+        function drawBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (i === pacmanPos) cell.textContent = '🟡';
+                else if (ghostPositions.includes(i)) cell.textContent = '👻';
+                else if (blueDots.includes(i)) cell.textContent = '🔵';
+                board.appendChild(cell);
+            }
+        }
+
+        function movePacman(direction) {
+            if (gameOver || gameWin || gamePaused) return;
+            let newPos = pacmanPos;
+            if (direction === 'up' && pacmanPos >= COLS) newPos = pacmanPos - COLS;
+            else if (direction === 'down' && pacmanPos < TOTAL_CELLS - COLS) newPos = pacmanPos + COLS;
+            else if (direction === 'left' && pacmanPos % COLS !== 0) newPos = pacmanPos - 1;
+            else if (direction === 'right' && pacmanPos % COLS !== COLS - 1) newPos = pacmanPos + 1;
+            
+            pacmanPos = newPos;
+            if (blueDots.includes(pacmanPos)) {
+                blueDots = blueDots.filter(pos => pos !== pacmanPos);
+                score += 10;
+                document.getElementById('score').textContent = score;
+            }
+            if (blueDots.length === 0) {
+                gameWin = true;
+                document.getElementById('message').textContent = '🎉 恭喜！你贏了！';
+                document.getElementById('message').className = 'win';
+                clearInterval(ghostInterval);
+            }
+            drawBoard();
+            checkCollision();
+        }
+
+        function moveGhosts() {
+            ghostPositions = ghostPositions.map(pos => {
+                const directions = [-COLS, COLS, -1, 1];
+                let validMoves = [];
+                directions.forEach(dir => {
+                    let newPos = pos + dir;
+                    if (newPos >= 0 && newPos < TOTAL_CELLS) {
+                        if (dir === -COLS || dir === COLS) validMoves.push(newPos);
+                        else if (dir === -1 && pos % COLS !== 0) validMoves.push(newPos);
+                        else if (dir === 1 && pos % COLS !== COLS - 1) validMoves.push(newPos);
+                    }
+                });
+                return validMoves.length > 0 ? validMoves[Math.floor(Math.random() * validMoves.length)] : pos;
+            });
+        }
+
+        function checkCollision() {
+            if (ghostPositions.includes(pacmanPos)) {
+                gameOver = true;
+                document.getElementById('message').textContent = '💀 遊戲結束！被幽靈抓到了';
+                document.getElementById('message').className = 'lose';
+                clearInterval(ghostInterval);
+            }
+        }
+
+        function pauseGame() {
+            gamePaused = !gamePaused;
+            const btn = event.target;
+            btn.textContent = gamePaused ? '▶️ 繼續' : '⏸️ 暫停';
+            btn.style.background = gamePaused ? '#e74c3c' : '#667eea';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') { movePacman('up'); e.preventDefault(); }
+            else if (e.key === 'ArrowDown') { movePacman('down'); e.preventDefault(); }
+            else if (e.key === 'ArrowLeft') { movePacman('left'); e.preventDefault(); }
+            else if (e.key === 'ArrowRight') { movePacman('right'); e.preventDefault(); }
+        });
+    </script>
+</body>
+</html>
