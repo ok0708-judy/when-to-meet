@@ -10,38 +10,123 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: Arial, sans-serif;
             margin: 0;
+            padding: 20px;
         }
 
         #gameContainer {
             text-align: center;
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
         }
 
         h1 {
             color: #333;
-            margin: 0 0 10px 0;
+            margin: 0 0 20px 0;
+        }
+
+        #difficultyPanel {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #difficultyPanel.show {
+            display: block;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .difficulty-btn {
+            background: #667eea;
+            color: white;
+            border: 2px solid transparent;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn.active {
+            border-color: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .settings {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: left;
+            display: none;
+        }
+
+        .settings.show {
+            display: block;
+        }
+
+        .setting-item {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .setting-item label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .setting-item input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .setting-value {
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            min-width: 40px;
+            text-align: center;
         }
 
         #info {
             font-size: 18px;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
         }
 
         /* 遊戲區域 */
         #gameBoard {
             display: inline-grid;
-            grid-template-columns: repeat(10, 1fr);
             gap: 2px;
             background: #000;
             padding: 10px;
             margin: 20px 0;
             border-radius: 5px;
+            border: 3px solid #667eea;
         }
 
         /* 遊戲格子 */
@@ -61,21 +146,40 @@
             color: #666;
             font-size: 14px;
             margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         button {
-            background: #4CAF50;
+            background: #667eea;
             color: white;
             border: none;
             padding: 10px 20px;
             font-size: 16px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            transition: background 0.3s;
         }
 
         button:hover {
-            background: #45a049;
+            background: #764ba2;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
         }
 
         #message {
@@ -86,49 +190,251 @@
         }
 
         .lose {
-            color: red;
+            color: #e74c3c;
         }
 
         .win {
-            color: green;
+            color: #2ecc71;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <h1>🎮 簡單 Pac-Man</h1>
-        <div id="info">分數: <span id="score">0</span></div>
+        <h1>🎮 Pac-Man 遊戲 - 難度選擇版</h1>
+        
+        <!-- 難度選擇面板 -->
+        <div id="difficultyPanel" class="show">
+            <h3 style="margin-top: 0; color: #333;">選擇難度等級</h3>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn" onclick="setDifficulty('easy')">🟢 簡單</button>
+                <button class="difficulty-btn" onclick="setDifficulty('normal')">🟡 普通</button>
+                <button class="difficulty-btn" onclick="setDifficulty('hard')">🔴 困難</button>
+                <button class="difficulty-btn" onclick="setDifficulty('custom')">⚙️ 自訂</button>
+            </div>
+            
+            <!-- 自訂設定面板 -->
+            <div id="customSettings" class="settings">
+                <h4 style="margin-top: 0;">遊戲參數設定</h4>
+                
+                <div class="setting-item">
+                    <label>棋盤大小:</label>
+                    <div>
+                        <label style="font-weight: normal; margin-right: 20px;">
+                            寬度: 
+                            <input type="range" id="boardWidth" min="5" max="15" value="10" onchange="updateSettingValue('boardWidth')">
+                            <span class="setting-value" id="boardWidthValue">10</span>
+                        </label>
+                        <label style="font-weight: normal;">
+                            高度: 
+                            <input type="range" id="boardHeight" min="3" max="8" value="5" onchange="updateSettingValue('boardHeight')">
+                            <span class="setting-value" id="boardHeightValue">5</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>幽靈移動速度:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="range" id="ghostSpeed" min="300" max="2000" value="1000" step="100" onchange="updateSettingValue('ghostSpeed')">
+                        <span class="setting-value" id="ghostSpeedValue">1000ms</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>幽靈數量:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="range" id="ghostCount" min="1" max="5" value="1" onchange="updateSettingValue('ghostCount')">
+                        <span class="setting-value" id="ghostCountValue">1</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="startGameWithCustom()" style="margin-right: 10px;">開始遊戲</button>
+                    <button class="secondary" onclick="resetCustomSettings()">重置</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="info" style="display: none;">
+            <div>分數: <span id="score">0</span></div>
+            <div>難度: <span id="difficulty">普通</span></div>
+        </div>
         <div id="gameBoard"></div>
-        <div class="controls">
+        <div class="controls" style="display: none;" id="controlsPanel">
             👆 用方向鍵移動黃色點點<br>
             🔵 吃掉所有藍點<br>
             👻 避開紅色幽靈
         </div>
-        <button onclick="location.reload()">重新開始</button>
+        <div class="button-group" style="display: none;" id="buttonGroup">
+            <button onclick="pauseGame()">⏸️ 暫停</button>
+            <button onclick="location.reload()">🔄 重新開始</button>
+        </div>
         <div id="message"></div>
     </div>
 
     <script>
+        // ===== 難度設定 =====
+        const DIFFICULTY_PRESETS = {
+            easy: {
+                cols: 10,
+                rows: 5,
+                ghostSpeed: 1500,
+                ghostCount: 1,
+                displayName: '簡單'
+            },
+            normal: {
+                cols: 10,
+                rows: 5,
+                ghostSpeed: 1000,
+                ghostCount: 2,
+                displayName: '普通'
+            },
+            hard: {
+                cols: 12,
+                rows: 6,
+                ghostSpeed: 600,
+                ghostCount: 3,
+                displayName: '困難'
+            }
+        };
+
         // ===== 遊戲設定 =====
-        const ROWS = 5;           // 5 列
-        const COLS = 10;          // 10 行
-        const TOTAL_CELLS = ROWS * COLS;
+        let ROWS = 5;
+        let COLS = 10;
+        let GHOST_SPEED = 1000;
+        let GHOST_COUNT = 1;
+        let TOTAL_CELLS = ROWS * COLS;
+        let currentDifficulty = 'normal';
 
         // ===== 遊戲變數 =====
-        let pacmanPos = 0;         // Pac-Man 位置（0-49）
-        let ghostPos = TOTAL_CELLS - 1;  // 幽靈位置
-        let blueDots = [];         // 藍點的位置陣列
-        let score = 0;             // 分數
-        let gameOver = false;      // 遊戲是否結束
-        let gameWin = false;       // 遊戲是否獲勝
+        let pacmanPos = 0;
+        let ghostPositions = [];
+        let blueDots = [];
+        let score = 0;
+        let gameOver = false;
+        let gameWin = false;
+        let gamePaused = false;
+        let ghostInterval = null;
+
+        // ===== 設定難度 =====
+        function setDifficulty(difficulty) {
+            if (difficulty === 'custom') {
+                document.getElementById('customSettings').classList.add('show');
+            } else {
+                document.getElementById('customSettings').classList.remove('show');
+                const preset = DIFFICULTY_PRESETS[difficulty];
+                ROWS = preset.rows;
+                COLS = preset.cols;
+                GHOST_SPEED = preset.ghostSpeed;
+                GHOST_COUNT = preset.ghostCount;
+                TOTAL_CELLS = ROWS * COLS;
+                currentDifficulty = difficulty;
+                
+                // 更新按鈕狀態
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                startGame();
+            }
+        }
+
+        // ===== 更新自訂設定值顯示 =====
+        function updateSettingValue(settingId) {
+            const elem = document.getElementById(settingId);
+            const valueElem = document.getElementById(settingId + 'Value');
+            if (settingId === 'ghostSpeed') {
+                valueElem.textContent = elem.value + 'ms';
+            } else if (settingId === 'ghostCount') {
+                valueElem.textContent = elem.value;
+            } else if (settingId === 'boardWidth') {
+                valueElem.textContent = elem.value;
+            } else if (settingId === 'boardHeight') {
+                valueElem.textContent = elem.value;
+            }
+        }
+
+        // ===== 開始自訂遊戲 =====
+        function startGameWithCustom() {
+            COLS = parseInt(document.getElementById('boardWidth').value);
+            ROWS = parseInt(document.getElementById('boardHeight').value);
+            GHOST_SPEED = parseInt(document.getElementById('ghostSpeed').value);
+            GHOST_COUNT = parseInt(document.getElementById('ghostCount').value);
+            TOTAL_CELLS = ROWS * COLS;
+            currentDifficulty = 'custom';
+            
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            startGame();
+        }
+
+        // ===== 重置自訂設定 =====
+        function resetCustomSettings() {
+            document.getElementById('boardWidth').value = '10';
+            document.getElementById('boardHeight').value = '5';
+            document.getElementById('ghostSpeed').value = '1000';
+            document.getElementById('ghostCount').value = '1';
+            updateSettingValue('boardWidth');
+            updateSettingValue('boardHeight');
+            updateSettingValue('ghostSpeed');
+            updateSettingValue('ghostCount');
+        }
+
+        // ===== 開始遊戲 =====
+        function startGame() {
+            pacmanPos = 0;
+            score = 0;
+            gameOver = false;
+            gameWin = false;
+            gamePaused = false;
+            blueDots = [];
+            ghostPositions = [];
+            
+            // 隱藏難度面板，顯示遊戲
+            document.getElementById('difficultyPanel').classList.remove('show');
+            document.getElementById('info').style.display = 'flex';
+            document.getElementById('controlsPanel').style.display = 'block';
+            document.getElementById('buttonGroup').style.display = 'flex';
+            
+            // 更新難度顯示
+            document.getElementById('difficulty').textContent = 
+                currentDifficulty === 'custom' ? '自訂' : DIFFICULTY_PRESETS[currentDifficulty].displayName;
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = '';
+            
+            // 設定棋盤欄數
+            document.getElementById('gameBoard').style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            
+            // 初始化幽靈位置
+            for (let i = 0; i < GHOST_COUNT; i++) {
+                ghostPositions.push(TOTAL_CELLS - 1 - i);
+            }
+            
+            initGame();
+            
+            // 清除舊的幽靈移動計時器
+            if (ghostInterval) clearInterval(ghostInterval);
+            
+            // 啟動新的幽靈移動計時器
+            ghostInterval = setInterval(() => {
+                if (!gameOver && !gameWin && !gamePaused) {
+                    moveGhosts();
+                    checkCollision();
+                    drawBoard();
+                }
+            }, GHOST_SPEED);
+        }
 
         // ===== 初始化遊戲 =====
         function initGame() {
-            // 清空藍點
             blueDots = [];
-            // 在所有格子中放藍點（除了 Pac-Man 和幽靈的位置）
             for (let i = 0; i < TOTAL_CELLS; i++) {
-                if (i !== pacmanPos && i !== ghostPos) {
+                if (i !== pacmanPos && !ghostPositions.includes(i)) {
                     blueDots.push(i);
                 }
             }
@@ -138,20 +444,18 @@
         // ===== 繪製遊戲棋盤 =====
         function drawBoard() {
             const board = document.getElementById('gameBoard');
-            board.innerHTML = '';  // 清空棋盤
+            board.innerHTML = '';
 
-            // 逐個建立格子
             for (let i = 0; i < TOTAL_CELLS; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
 
-                // 判斷這個格子顯示什麼
                 if (i === pacmanPos) {
-                    cell.textContent = '🟡';  // Pac-Man
-                } else if (i === ghostPos) {
-                    cell.textContent = '👻';  // 幽靈
+                    cell.textContent = '🟡';
+                } else if (ghostPositions.includes(i)) {
+                    cell.textContent = '👻';
                 } else if (blueDots.includes(i)) {
-                    cell.textContent = '🔵';  // 藍點
+                    cell.textContent = '🔵';
                 }
 
                 board.appendChild(cell);
@@ -160,11 +464,10 @@
 
         // ===== Pac-Man 移動 =====
         function movePacman(direction) {
-            if (gameOver || gameWin) return;  // 遊戲結束就不能動
+            if (gameOver || gameWin || gamePaused) return;
 
             let newPos = pacmanPos;
 
-            // 根據方向計算新位置
             if (direction === 'up' && pacmanPos >= COLS) {
                 newPos = pacmanPos - COLS;
             } else if (direction === 'down' && pacmanPos < TOTAL_CELLS - COLS) {
@@ -177,62 +480,65 @@
 
             pacmanPos = newPos;
 
-            // 檢查有沒有吃到藍點
             if (blueDots.includes(pacmanPos)) {
                 blueDots = blueDots.filter(pos => pos !== pacmanPos);
                 score += 10;
                 document.getElementById('score').textContent = score;
             }
 
-            // 檢查有沒有吃完所有藍點（獲勝）
             if (blueDots.length === 0) {
                 gameWin = true;
                 document.getElementById('message').textContent = '🎉 恭喜！你贏了！';
                 document.getElementById('message').className = 'win';
+                clearInterval(ghostInterval);
             }
 
             drawBoard();
-            moveGhost();
             checkCollision();
         }
 
         // ===== 幽靈移動 =====
-        function moveGhost() {
-            // 隨機選擇 4 個方向
-            const directions = [-COLS, COLS, -1, 1];
-            let validMoves = [];
+        function moveGhosts() {
+            ghostPositions = ghostPositions.map(pos => {
+                const directions = [-COLS, COLS, -1, 1];
+                let validMoves = [];
 
-            // 找出所有可以移動的方向
-            directions.forEach(dir => {
-                let newPos = ghostPos + dir;
-                // 檢查是否超出棋盤邊界
-                if (newPos >= 0 && newPos < TOTAL_CELLS) {
-                    // 上下移動時的邊界檢查
-                    if (dir === -COLS || dir === COLS) {
-                        validMoves.push(newPos);
+                directions.forEach(dir => {
+                    let newPos = pos + dir;
+                    if (newPos >= 0 && newPos < TOTAL_CELLS) {
+                        if (dir === -COLS || dir === COLS) {
+                            validMoves.push(newPos);
+                        } else if (dir === -1 && pos % COLS !== 0) {
+                            validMoves.push(newPos);
+                        } else if (dir === 1 && pos % COLS !== COLS - 1) {
+                            validMoves.push(newPos);
+                        }
                     }
-                    // 左右移動時的邊界檢查
-                    else if (dir === -1 && ghostPos % COLS !== 0) {
-                        validMoves.push(newPos);
-                    } else if (dir === 1 && ghostPos % COLS !== COLS - 1) {
-                        validMoves.push(newPos);
-                    }
+                });
+
+                if (validMoves.length > 0) {
+                    return validMoves[Math.floor(Math.random() * validMoves.length)];
                 }
+                return pos;
             });
-
-            // 從可以移動的方向中隨機選一個
-            if (validMoves.length > 0) {
-                ghostPos = validMoves[Math.floor(Math.random() * validMoves.length)];
-            }
         }
 
         // ===== 檢查碰撞 =====
         function checkCollision() {
-            if (pacmanPos === ghostPos) {
+            if (ghostPositions.includes(pacmanPos)) {
                 gameOver = true;
                 document.getElementById('message').textContent = '💀 遊戲結束！被幽靈抓到了';
                 document.getElementById('message').className = 'lose';
+                clearInterval(ghostInterval);
             }
+        }
+
+        // ===== 暫停遊戲 =====
+        function pauseGame() {
+            gamePaused = !gamePaused;
+            const btn = event.target;
+            btn.textContent = gamePaused ? '▶️ 繼續' : '⏸️ 暫停';
+            btn.style.background = gamePaused ? '#e74c3c' : '#667eea';
         }
 
         // ===== 鍵盤控制 =====
@@ -251,18 +557,6 @@
                 e.preventDefault();
             }
         });
-
-        // ===== 自動移動幽靈 =====
-        setInterval(() => {
-            if (!gameOver && !gameWin) {
-                moveGhost();
-                checkCollision();
-                drawBoard();
-            }
-        }, 1000);
-
-        // ===== 開始遊戲 =====
-        initGame();
     </script>
 </body>
 </html>
