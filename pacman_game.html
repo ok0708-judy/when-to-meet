@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pac-Man 遊戲 - 難度選擇版</title>
+    <title>公雞找谷粒遊戲 - 難度選擇版</title>
     <style>
         * {
             margin: 0;
@@ -203,7 +203,7 @@
 </head>
 <body>
     <div id="gameContainer">
-        <h1>🎮 Pac-Man 遊戲</h1>
+        <h1>🎮 公雞找谷粒遊戲</h1>
         
         <div id="difficultyPanel">
             <h3 style="margin-bottom: 15px; color: #333;">選擇難度等級</h3>
@@ -262,9 +262,9 @@
         </div>
         <div id="gameBoard"></div>
         <div class="controls" id="controlsPanel">
-            👆 用方向鍵移動黃色點點<br>
-            🔵 吃掉所有藍點<br>
-            👻 避開紅色幽靈
+            👆 用方向鍵移動公雞<br>
+            🌾 吃掉所有谷粒<br>
+            👹 避開妖怪
         </div>
         <div class="button-group" id="buttonGroup">
             <button onclick="pauseGame()">⏸️ 暫停</button>
@@ -392,9 +392,9 @@
             for (let i = 0; i < TOTAL_CELLS; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                if (i === pacmanPos) cell.textContent = '🟡';
-                else if (ghostPositions.includes(i)) cell.textContent = '👻';
-                else if (blueDots.includes(i)) cell.textContent = '🔵';
+                if (i === pacmanPos) cell.textContent = '🐓';
+                else if (ghostPositions.includes(i)) cell.textContent = '👹';
+                else if (blueDots.includes(i)) cell.textContent = '🌾';
                 board.appendChild(cell);
             }
         }
@@ -415,7 +415,7 @@
             }
             if (blueDots.length === 0) {
                 gameWin = true;
-                document.getElementById('message').textContent = '🎉 恭喜！你贏了！';
+                document.getElementById('message').textContent = '🎉 恭喜！公雞吃飽了！';
                 document.getElementById('message').className = 'win';
                 clearInterval(ghostInterval);
             }
@@ -442,7 +442,7 @@
         function checkCollision() {
             if (ghostPositions.includes(pacmanPos)) {
                 gameOver = true;
-                document.getElementById('message').textContent = '💀 遊戲結束！被幽靈抓到了';
+                document.getElementById('message').textContent = '💀 遊戲結束！公雞被抓走了';
                 document.getElementById('message').className = 'lose';
                 clearInterval(ghostInterval);
             }
