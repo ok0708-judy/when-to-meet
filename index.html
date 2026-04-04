@@ -2,178 +2,223 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遊戲中心 - 歡樂遊戲大集合</title>
+    <title>全能版 When2meet - 具備重設功能</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --level1: #ADD8E6; --level2: #90EE90; --level3: #FFFFE0; --level4: #FFB347; --level5: #FF6961;
         }
 
-        body {
-            font-family: 'Arial', '微軟正黑體', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .main-card { background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 950px; }
+        
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 15px; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .how-to-use { background: #fffde7; border: 1px solid #fff59d; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #5d4037; line-height: 1.5; }
 
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 60px;
-        }
+        /* 控制面板 */
+        .control-panel { display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 25px; flex-wrap: wrap; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 12px; color: #666; font-weight: bold; }
+        
+        input[type="text"], input[type="date"] { padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; }
 
-        header h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
+        /* 按鈕樣式 */
+        .btn-group { display: flex; gap: 10px; align-self: flex-end; }
+        .btn { border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; height: 42px; transition: 0.2s; }
+        .btn-submit { background-color: #4db6ac; color: white; }
+        .btn-submit:hover { background-color: #00897b; }
+        .btn-reset-selection { background-color: #cfd8dc; color: #546e7a; }
+        .btn-danger { background-color: #ffab91; color: #d84315; border: 1px solid #ff8a65; }
+        .btn-danger:hover { background-color: #ff8a65; color: white; }
 
-        header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
+        /* 表格 */
+        .table-wrapper { overflow-x: auto; display: flex; flex-direction: column; align-items: center; }
+        table { border-collapse: collapse; user-select: none; border: 2px solid #eceff1; background: white; }
+        th { background: #667eea; color: white; padding: 10px; font-size: 12px; border: 1px solid #5a6fd6; min-width: 100px; }
+        td { border: 1px solid #eceff1; height: 35px; }
+        
+        .time-label { background: #f1f3f4; font-size: 11px; color: #5f6368; text-align: center; width: 65px; font-weight: bold; }
+        
+        /* 顏色等級 */
+        .slot { cursor: cell; background-color: #fff; }
+        .slot.level-1 { background-color: var(--level1); }
+        .slot.level-2 { background-color: var(--level2); }
+        .slot.level-3 { background-color: var(--level3); }
+        .slot.level-4 { background-color: var(--level4); }
+        .slot.level-5 { background-color: var(--level5); }
+        .current-selecting { outline: 2px solid #333; z-index: 5; position: relative; }
 
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
-        }
+        .legend { display: flex; gap: 15px; justify-content: center; margin-top: 20px; font-size: 12px; color: #666; }
+        .color-box { width: 14px; height: 14px; border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 4px; border: 1px solid #ddd; }
 
-        .game-card {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .game-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-icon {
-            font-size: 80px;
-            text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .game-info {
-            padding: 20px;
-        }
-
-        .game-info h2 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-
-        .game-info p {
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .game-link {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .game-link:hover {
-            background: #764ba2;
-        }
-
-        .features {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            margin-top: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .features h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .features-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .feature-item {
-            padding: 15px;
-            border-left: 4px solid #667eea;
-        }
-
-        .feature-item h3 {
-            color: #667eea;
-            margin-bottom: 8px;
-        }
-
-        .feature-item p {
-            color: #666;
-        }
+        .member-list { margin-top: 30px; border-top: 2px dashed #eee; padding-top: 20px; }
+        .tag { background: #e0f2f1; color: #00695c; padding: 8px 15px; border-radius: 50px; font-size: 13px; border: 1px solid #b2dfdb; display: inline-block; margin: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎮 遊戲中心</h1>
-            <p>選擇你喜歡的遊戲，開始你的冒險吧！</p>
-        </header>
 
-        <div class="games-grid">
-            <!-- 公雞找谷粒遊戲 -->
-            <div class="game-card">
-                <div class="game-icon">🐓</div>
-                <div class="game-info">
-                    <h2>公雞找谷粒</h2>
-                    <p>幫助可愛的公雞找到所有的谷粒，但要小心別被妖怪抓到！</p>
-                    <a href="pacman_game.html" class="game-link">開始遊戲</a>
-                </div>
-            </div>
+<div class="main-card">
+    <h2>📅 日期精確預約表 (多人疊加版)</h2>
+
+    <div class="how-to-use">
+        <strong>💡 操作指南：</strong><br>
+        • <strong>選多個時段：</strong> 滑鼠按住左鍵不放，可以直接在表格上「刷」出一整片你有空的時間（不限一個）。<br>
+        • <strong>修改選取：</strong> 在按送出前，再次點擊格子可取消。或點「重設本次選取」。<br>
+        • <strong>完全重來：</strong> 若要刪除所有人的紀錄並重新開始，請點擊下方的「🚨 清空所有資料」。
+    </div>
+
+    <div class="control-panel">
+        <div class="input-group">
+            <label>1. 起始日期</label>
+            <input type="date" id="dateSelector" onchange="updateTableHeaders()">
         </div>
-
-        <div class="features">
-            <h2>✨ 遊戲特色</h2>
-            <div class="features-list">
-                <div class="feature-item">
-                    <h3>🎯 多難度選擇</h3>
-                    <p>從簡單到困難，還能自訂遊戲參數，挑戰自己的極限</p>
-                </div>
-                <div class="feature-item">
-                    <h3>📱 跨平台支持</h3>
-                    <p>電腦、平板、手機都能玩，隨時隨地享受遊戲樂趣</p>
-                </div>
-                <div class="feature-item">
-                    <h3>🌟 免費開放</h3>
-                    <p>完全免費，無廣告，無下載，直接在瀏覽器中玩</p>
-                </div>
-                <div class="feature-item">
-                    <h3>💯 趣味十足</h3>
-                    <p>可愛的角色、流暢的遊戲體驗、讓你欲罷不能</p>
-                </div>
-            </div>
+        <div class="input-group">
+            <label>2. 您的姓名</label>
+            <input type="text" id="userName" placeholder="請輸入姓名">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-submit" onclick="submitTime()">送出我的時間</button>
+            <button class="btn btn-reset-selection" onclick="resetCurrentSelection()">重設本次選取</button>
         </div>
     </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr id="headerRow">
+                    <th>時間</th>
+                    <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        
+        <div class="legend">
+            <span><div class="color-box" style="background:var(--level1)"></div> 1人</span>
+            <span><div class="color-box" style="background:var(--level2)"></div> 2人</span>
+            <span><div class="color-box" style="background:var(--level3)"></div> 3人</span>
+            <span><div class="color-box" style="background:var(--level4)"></div> 4人</span>
+            <span><div class="color-box" style="background:var(--level5)"></div> 5人+</span>
+        </div>
+    </div>
+
+    <div class="member-list">
+        <strong>👥 已參與成員：</strong>
+        <div id="tagContainer">尚未有人填寫</div>
+        <br>
+        <button class="btn btn-danger" style="margin-top: 10px; font-size: 12px;" onclick="clearAllData()">🚨 清空所有資料 (完全重來)</button>
+    </div>
+</div>
+
+<script>
+    const startH = 8, endH = 22;
+    const tableBody = document.getElementById('tableBody');
+    const headerRow = document.getElementById('headerRow');
+    let dataRecord = {}; 
+    let submittedMembers = [];
+    let isDragging = false;
+    let selectedCells = new Set();
+
+    // 初始化日期選擇器為今天
+    const dateInput = document.getElementById('dateSelector');
+    dateInput.value = new Date().toISOString().split('T')[0];
+
+    // 產生表格
+    function initTable() {
+        tableBody.innerHTML = '';
+        for (let h = startH; h <= endH; h++) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td class="time-label">${h}:00</td>`;
+            for (let d = 1; d <= 7; d++) {
+                const id = `${d}-${h}`;
+                dataRecord[id] = 0;
+                const td = document.createElement('td');
+                td.className = 'slot';
+                td.id = id;
+                td.onmousedown = (e) => { isDragging = true; toggleCell(td); e.preventDefault(); };
+                td.onmouseenter = () => { if (isDragging) toggleCell(td); };
+                row.appendChild(td);
+            }
+            tableBody.appendChild(row);
+        }
+        updateTableHeaders();
+    }
+
+    // 更新表頭日期
+    function updateTableHeaders() {
+        const startDate = new Date(dateInput.value);
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+        headerRow.innerHTML = '<th>時間</th>';
+        for (let i = 0; i < 7; i++) {
+            const current = new Date(startDate);
+            current.setDate(startDate.getDate() + i);
+            const month = current.getMonth() + 1;
+            const date = current.getDate();
+            const dayName = dayNames[current.getDay()];
+            const th = document.createElement('th');
+            th.innerHTML = `${month}/${date}<br>(${dayName})`;
+            headerRow.appendChild(th);
+        }
+    }
+
+    window.onmouseup = () => { isDragging = false; };
+
+    function toggleCell(td) {
+        if (selectedCells.has(td.id)) {
+            selectedCells.delete(td.id);
+            td.classList.remove('current-selecting');
+        } else {
+            selectedCells.add(td.id);
+            td.classList.add('current-selecting');
+        }
+    }
+
+    function resetCurrentSelection() {
+        selectedCells.clear();
+        document.querySelectorAll('.slot').forEach(el => el.classList.remove('current-selecting'));
+    }
+
+    // --- 🚨 核心：完全重來的功能 ---
+    function clearAllData() {
+        if (confirm("確定要刪除所有成員紀錄並重置表格嗎？這動作無法復原喔！")) {
+            submittedMembers = [];
+            selectedCells.clear();
+            initTable(); // 重新產生表格會歸零所有 dataRecord
+            document.getElementById('tagContainer').innerHTML = '尚未有人填寫';
+            document.getElementById('userName').value = '';
+            alert("已清空所有資料！");
+        }
+    }
+
+    function submitTime() {
+        const nameInput = document.getElementById('userName');
+        const name = nameInput.value.trim();
+        if (!name) { alert("請輸入姓名！"); return; }
+        if (selectedCells.size === 0) { alert("請塗色選取時段！"); return; }
+        if (submittedMembers.includes(name)) { alert("此姓名已提交過！"); return; }
+
+        submittedMembers.push(name);
+        selectedCells.forEach(id => {
+            dataRecord[id] += 1;
+            const count = dataRecord[id];
+            const cell = document.getElementById(id);
+            cell.className = 'slot'; 
+            if (count >= 5) cell.classList.add('level-5');
+            else if (count === 4) cell.classList.add('level-4');
+            else if (count === 3) cell.classList.add('level-3');
+            else if (count === 2) cell.classList.add('level-2');
+            else if (count === 1) cell.classList.add('level-1');
+        });
+
+        document.getElementById('tagContainer').innerHTML = submittedMembers.map(m => `<span class="tag">👤 ${m}</span>`).join('');
+        resetCurrentSelection();
+        nameInput.value = '';
+    }
+
+    initTable();
+</script>
+
 </body>
 </html>
